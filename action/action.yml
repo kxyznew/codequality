@@ -1,0 +1,62 @@
+name: Codequality
+description: Detect project languages, run available quality scanners, and create SARIF results.
+author: kxyznew
+
+inputs:
+  path:
+    description: Repository directory to scan, relative to the checkout.
+    required: false
+    default: .
+  fail-on:
+    description: Fail on error, warning, or none. Scanner execution errors always fail.
+    required: false
+    default: warning
+  sarif-file:
+    description: SARIF output path relative to the checkout.
+    required: false
+    default: .codequality/results.sarif
+  upload-sarif:
+    description: Upload SARIF results to GitHub code scanning.
+    required: false
+    default: "true"
+
+outputs:
+  findings-count:
+    description: Number of findings written to SARIF.
+    value: ${{ steps.scan.outputs['findings-count'] }}
+  sarif-file:
+    description: Path to the generated SARIF file.
+    value: ${{ steps.scan.outputs['sarif-file'] }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: "3.12"
+
+    - name: Install Codequality
+      shell: bash
+      run: python -m pip install --disable-pip-version-check -e "$GITHUB_ACTION_PATH/.."
+
+    - name: Scan repository
+      id: scan
+      shell: bash
+      env:
+        CODEQUALITY_PATH: ${{ inputs.path }}
+        CODEQUALITY_FAIL_ON: ${{ inputs['fail-on'] }}
+        CODEQUALITY_SARIF: ${{ inputs['sarif-file'] }}
+      run: >-
+        codequality scan
+        --workspace "$GITHUB_WORKSPACE/$CODEQUALITY_PATH"
+        --root "$GITHUB_WORKSPACE"
+        --sarif "$GITHUB_WORKSPACE/$CODEQUALITY_SARIF"
+        --fail-on "$CODEQUALITY_FAIL_ON"
+
+    - name: Upload SARIF to GitHub code scanning
+      if: ${{ always() && inputs['upload-sarif'] == 'true' && steps.scan.outcome != 'skipped' }}
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: ${{ inputs['sarif-file'] }}
+        category: codequality
