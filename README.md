@@ -67,24 +67,11 @@ python -m pip install -e .
 codequality scan --workspace . --sarif .codequality/results.sarif --fail-on warning
 ```
 
-## Publish this repository
+## Releases
 
-Create an empty public repository named `codequality` under the GitHub account `kxyznew`. Leave README, license, and `.gitignore` unchecked so the first push has no remote commit to reconcile. Then, from this folder, run:
+This repository is published at [github.com/kxyznew/codequality](https://github.com/kxyznew/codequality). The `v1.0.0` release is the first version, and the `v1` major-version tag points to the same source state. Use `kxyznew/codequality/action@v1` in workflows to follow compatible v1 updates.
 
-```bash
-REPO_URL=git@github.com:kxyznew/codequality.git bash bootstrap.sh
-```
-
-The script initializes the local Git repository, commits these files, and pushes the `main` branch. It does not create the GitHub repository or tags. After the first push, publish the version tags:
-
-```bash
-git tag -a v1.0.0 -m "v1.0.0"
-git push origin v1.0.0
-git tag -fa v1 -m "v1"
-git push origin v1 --force
-```
-
-The action reference in the example workflow then resolves as `kxyznew/codequality/action@v1`.
+To publish a fork, create an empty repository on GitHub and run `bootstrap.sh` with `REPO_URL` set to your new repository. The script initializes Git, commits these files, and pushes the `main` branch; it does not create a GitHub repository or release tags.
 
 ## License
 
